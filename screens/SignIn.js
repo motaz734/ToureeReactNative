@@ -44,8 +44,39 @@ const validateSignin = (email, password, isLoggedIn, setIsLoggedIn) => {
   } else if (password === '') {
     alert('Please enter your password');
   } else {
-    alert('Signin successful');
-    setIsLoggedIn(true);
+    // send to server
+    let data = {
+      formFields: [
+        {
+          id: 'email',
+          value: email,
+        },
+        {
+          id: 'password',
+          value: password,
+        },
+      ],
+    };
+    let url = 'http://192.168.1.4:8000/auth/signin';
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        rid: 'emailpassword',
+      },
+      body: JSON.stringify(data),
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'OK') {
+          setIsLoggedIn(true);
+        } else {
+          alert(data.formFields[0].error);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
   }
 };
 

@@ -6,6 +6,9 @@ import {Search} from './Search';
 import {MainNavigator} from './MainNavigator';
 import {Profile} from './Profile';
 import {Place} from './Place';
+import {Gallery} from './Gallery';
+import {Reviews} from './Reviews';
+import {SearchResults} from './SearchResults';
 
 export const routes = {
   Auth: [
@@ -21,5 +24,8 @@ export const routes = {
   Common: [
     {path: 'MainNavigator', component: MainNavigator},
     {path: 'Place', component: Place},
+    {path: 'Gallery', component: Gallery},
+    {path: 'Reviews', component: Reviews},
+    {path: 'SearchResults', component: SearchResults},
   ],
 };

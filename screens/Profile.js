@@ -3,19 +3,24 @@ import React from 'react';
 import {NavigationContext} from '@react-navigation/native';
 import {Button} from '@rneui/themed';
 import {AuthContext} from '../App';
+import SuperTokens from 'supertokens-react-native';
 
 const styles = StyleSheet.create({});
 
-export const Profile: () => Node = () => {
-  const navigation = React.useContext(NavigationContext);
+const signOut = (setIsLoggedIn, navigation) => {
+  SuperTokens.signOut();
+  setIsLoggedIn(false);
+  navigation.navigate('Home');
+};
+
+export const Profile: (navigation: any) => Node = ({navigation}) => {
   const [isLoggedIn, setIsLoggedIn] = React.useContext(AuthContext);
   return (
     <>
       <Button
-        onPress={() => {
-          setIsLoggedIn(false);
-          navigation.navigate('Home');
-        }}
+        onPress={(setIsLoggedIn, navigation) =>
+          signOut(setIsLoggedIn, navigation)
+        }
         title="Sign Out"
       />
       <Text>Profile</Text>

@@ -56,8 +56,37 @@ const validateSignup = (
   } else if (password !== confirmPassword) {
     alert('Passwords do not match');
   } else {
-    alert('Signup successful');
-    setIsLoggedIn(true);
+    const data = {
+      formFields: [
+        {
+          id: 'email',
+          value: email,
+        },
+        {
+          id: 'password',
+          value: password,
+        },
+      ],
+    };
+    const url = 'http://192.168.1.4:8000/auth/signup';
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'OK') {
+          setIsLoggedIn(true);
+        } else {
+          alert(data.formFields[0].error);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
   }
 };
 
