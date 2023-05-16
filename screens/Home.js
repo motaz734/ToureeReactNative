@@ -1,5 +1,6 @@
 import {
   Alert,
+  RefreshControl,
   SafeAreaView,
   ScrollView,
   SectionList,
@@ -9,8 +10,17 @@ import {
 import React, {useState} from 'react';
 import {NavigationContext} from '@react-navigation/native';
 import {Colors, CustomHeader} from '../components';
-import {Icon, Image, ListItem, SearchBar, Text, Avatar} from '@rneui/themed';
-import {apiURL} from '../config';
+import {
+  Icon,
+  Image,
+  ListItem,
+  SearchBar,
+  Text,
+  Avatar,
+  Button,
+  Header,
+} from '@rneui/themed';
+import {apiURL, baseURL} from '../config';
 import nativeToastAndroid from 'react-native/Libraries/Components/ToastAndroid/NativeToastAndroid';
 import MapView, {Marker, PROVIDER_GOOGLE} from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
@@ -18,11 +28,14 @@ import {resolve} from '@babel/core/lib/vendor/import-meta-resolve';
 
 const styles = StyleSheet.create({
   header: {
-    height: 75,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     borderColor: Colors.dark,
+    backgroundColor: Colors.white,
+    paddingVertical: 10,
+  },
+  headerText: {
+    marginStart: 28,
   },
   profilePic: {
     width: 40,
@@ -91,10 +104,21 @@ const styles = StyleSheet.create({
     elevation: 5,
     marginVertical: 10,
   },
+  mapContainer: {
+    height: 400,
+    width: '90%',
+    alignSelf: 'center',
+    marginVertical: 20,
+    backgroundColor: Colors.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 15,
+  },
   map: {
-    width: '100%',
-    height: 500,
-    // ...StyleSheet.absoluteFillObject,
+    // width: '80%',
+    // height: 400,
+    width: '95%',
+    height: '95%',
   },
   subRow: {
     flexDirection: 'row',
@@ -131,14 +155,12 @@ const Category = ({name, image, region}) => {
         title="P"
         titleStyle={{}}
         onPress={() => {
-          console.log('pressed');
           // make a search query for the category
           fetch(
             `${apiURL}/restaurants/?lat=${region.latitude}&lng=${region.longitude}&cuisine=${name}`,
           )
             .then(response => response.json())
             .then(json => {
-              console.log(json);
               // navigate to the search screen
               if (json.length == 0) {
                 nativeToastAndroid.show(
@@ -149,6 +171,8 @@ const Category = ({name, image, region}) => {
               }
               navigationContext.navigate('SearchResults', {
                 results: json,
+                query: '',
+                cuisine: name,
               });
             })
             .catch(error => console.error(error));
@@ -178,7 +202,7 @@ const Stat: () => Node = ({icon, value, color}) => {
     </View>
   );
 };
-const Place = ({data}) => {
+const Place = ({data, attraction}) => {
   let navigationContext = React.useContext(NavigationContext);
   // round distance to 1 decimal place
   let distance = Math.round(data.distance * 10) / 10;
@@ -193,6 +217,13 @@ const Place = ({data}) => {
       onPress={() => {
         nativeToastAndroid.show('Loading...', nativeToastAndroid.SHORT);
         // go to the place screen
+        if (attraction) {
+          navigationContext.navigate('Attraction', {
+            id: data.place_id,
+            image: data.image,
+          });
+          return;
+        }
         navigationContext.navigate('Place', {
           id: data.place_id,
           image: data.image,
@@ -233,7 +264,15 @@ const Categories = ({region}) => {
   }, []);
 
   if (loading) {
-    return <Text>Loading...</Text>;
+    return (
+      <Button
+        title="Solid"
+        type="solid"
+        loading
+        color="#EFEFEF"
+        loadingProps={{color: Colors.primary}}
+      />
+    );
   } else {
     return (
       <View style={styles.container}>
@@ -256,15 +295,6 @@ const Categories = ({region}) => {
   }
 };
 
-function TestMap() {
-  // show the map
-  return (
-    <View style={styles.container}>
-      <Text>Map</Text>
-    </View>
-  );
-}
-
 export const Home: (navigation: any) => Node = ({navigation}) => {
   const [places, setPlaces] = React.useState({});
   const [loading, setLoading] = React.useState(true);
@@ -278,8 +308,53 @@ export const Home: (navigation: any) => Node = ({navigation}) => {
   const [search, setSearch] = useState('');
   const [searchLoading, setSearchLoading] = useState(false);
   const [attractions, setAttractions] = useState([]);
-  const [favorites, setFavorites] = useState([]);
+  const [foryou, setForYou] = useState([]);
+  const [refreshing, setRefreshing] = React.useState(false);
+  const [profile, setProfile] = React.useState(null);
   // make region a context
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    Geolocation.getCurrentPosition(
+      position => {
+        nativeToastAndroid.show('Location found', nativeToastAndroid.SHORT);
+        fetch(
+          `${apiURL}/restaurants/nearby?lat=${position.coords.latitude}&lng=${position.coords.longitude}`,
+        )
+          .then(response => response.json())
+          .then(json => {
+            setPlaces(json.restaurants);
+            setRegion({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              latitudeDelta: 0.0922,
+              longitudeDelta: 0.0421,
+            });
+            setLoading(false);
+            setRefreshing(false);
+          })
+          .catch(error => console.error(error));
+        fetch(
+          `${apiURL}/attractions/?lat=${position.coords.latitude}&lng=${position.coords.longitude}`,
+        )
+          .then(response => response.json())
+          .then(json => {
+            setAttractions(json);
+          })
+          .catch(error => console.error(error));
+        fetch(
+          `${apiURL}/recommendations?lat=${position.coords.latitude}&lng=${position.coords.longitude}`,
+        )
+          .then(response => response.json())
+          .then(json => {
+            setForYou(json);
+          })
+          .catch(error => console.error(error));
+      },
+      error => setErrorMsg(error.message),
+      {enableHighAccuracy: true, timeout: 20000, maximumAge: 1000},
+    );
+  }, []);
 
   React.useEffect(() => {
     Geolocation.getCurrentPosition(
@@ -309,11 +384,17 @@ export const Home: (navigation: any) => Node = ({navigation}) => {
           })
           .catch(error => console.error(error));
         fetch(
-          `${apiURL}/restaurants/favorites?lat=${position.coords.latitude}&lng=${position.coords.longitude}`,
+          `${apiURL}/recommendations?lat=${position.coords.latitude}&lng=${position.coords.longitude}`,
         )
           .then(response => response.json())
           .then(json => {
-            setFavorites(json);
+            setForYou(json);
+          })
+          .catch(error => console.error(error));
+        fetch(`${apiURL}/profile`)
+          .then(response => response.json())
+          .then(json => {
+            setProfile(json);
           })
           .catch(error => console.error(error));
       },
@@ -324,18 +405,19 @@ export const Home: (navigation: any) => Node = ({navigation}) => {
 
   return (
     <SafeAreaView>
-      <ScrollView contentInsetAdjustmentBehavior="automatic">
-        {/*<View style={styles.header}>*/}
-        {/*  <Text>Hello Name</Text>*/}
-        {/*  <Text>Current Location</Text>*/}
-        {/*  <Icon name="notifications" />*/}
-        {/*  <Image*/}
-        {/*    source={{*/}
-        {/*      uri: 'https://placekitten.com/250/250',*/}
-        {/*    }}*/}
-        {/*    style={styles.profilePic}*/}
-        {/*  />*/}
-        {/*</View>*/}
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }>
+        <View style={styles.header}>
+          <Text style={styles.headerText} h3>
+            Hello,{' '}
+            {profile === null
+              ? 'User'
+              : `${profile.first_name} ${profile.last_name}`}
+          </Text>
+        </View>
         <SearchBar
           placeholder="Search for places"
           onChangeText={setSearch}
@@ -373,19 +455,53 @@ export const Home: (navigation: any) => Node = ({navigation}) => {
           <Text style={styles.rowTitle} h3>
             Categories
           </Text>
-          <Text style={styles.rowSubtext}>View all</Text>
         </View>
         {/* side scrollable categories */}
         <Categories region={region} />
         <View style={styles.row}>
           <Text style={styles.rowTitle} h3>
-            Nearby
+            For You
           </Text>
-          <Text style={styles.rowSubtext}>View all</Text>
         </View>
         {/* side scrollable popular */}
         {loading ? (
-          <Text>Loading...</Text>
+          <Button
+            title="Solid"
+            type="solid"
+            loading
+            color="#EFEFEF"
+            loadingProps={{color: Colors.primary}}
+          />
+        ) : (
+          <View style={styles.container}>
+            <SectionList
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              sections={[
+                {
+                  title: 'Places',
+                  data: Object.keys(foryou),
+                },
+              ]}
+              keyExtractor={(item, index) => item + index}
+              renderItem={({item}) => <Place data={foryou[item]} />}
+            />
+          </View>
+        )}
+        <View style={styles.row}>
+          <Text style={styles.rowTitle} h3>
+            Nearby
+          </Text>
+        </View>
+        {/* side scrollable popular */}
+        {loading ? (
+          <Button
+            title="Solid"
+            type="solid"
+            loading
+            color="#EFEFEF"
+            loadingProps={{color: Colors.primary}}
+          />
         ) : (
           <View style={styles.container}>
             <SectionList
@@ -404,39 +520,18 @@ export const Home: (navigation: any) => Node = ({navigation}) => {
         )}
         <View style={styles.row}>
           <Text style={styles.rowTitle} h3>
-            Favorites
-          </Text>
-          <Text style={styles.rowSubtext}>View all</Text>
-        </View>
-        {/* side scrollable popular */}
-        {loading ? (
-          <Text>Loading...</Text>
-        ) : (
-          <View style={styles.container}>
-            <SectionList
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              sections={[
-                {
-                  title: 'Favorites',
-                  data: Object.keys(favorites),
-                },
-              ]}
-              keyExtractor={(item, index) => item + index}
-              renderItem={({item}) => <Place data={favorites[item]} />}
-            />
-          </View>
-        )}
-
-        <View style={styles.row}>
-          <Text style={styles.rowTitle} h3>
             Attractions
           </Text>
-          <Text style={styles.rowSubtext}>View all</Text>
         </View>
         {/* side scrollable popular */}
         {loading ? (
-          <Text>Loading...</Text>
+          <Button
+            title="Solid"
+            type="solid"
+            loading
+            color="#EFEFEF"
+            loadingProps={{color: Colors.primary}}
+          />
         ) : (
           <View style={styles.container}>
             <SectionList
@@ -449,7 +544,9 @@ export const Home: (navigation: any) => Node = ({navigation}) => {
                 },
               ]}
               keyExtractor={(item, index) => item + index}
-              renderItem={({item}) => <Place data={attractions[item]} />}
+              renderItem={({item}) => (
+                <Place data={attractions[item]} attraction={true} />
+              )}
             />
           </View>
         )}
@@ -460,30 +557,38 @@ export const Home: (navigation: any) => Node = ({navigation}) => {
         </View>
         {/* Add a map */}
         {loading ? (
-          <Text>Loading...</Text>
+          <Button
+            title="Solid"
+            type="solid"
+            loading
+            color="#EFEFEF"
+            loadingProps={{color: Colors.primary}}
+          />
         ) : (
-          <MapView
-            style={styles.map}
-            region={region}
-            zoomControlEnabled={true}
-            minZoomLevel={15}
-            showsUserLocation={true}
-            followsUserLocation={true}>
-            {Object.keys(places).map((key, index) => {
-              // console.log(places[key].coordinates);
-              return (
-                <Marker
-                  key={index}
-                  coordinate={{
-                    latitude: places[key].coordinates[1],
-                    longitude: places[key].coordinates[0],
-                  }}
-                  title={places[key].name}
-                  description={places[key].address}
-                />
-              );
-            })}
-          </MapView>
+          <View style={styles.mapContainer}>
+            <MapView
+              style={styles.map}
+              region={region}
+              zoomControlEnabled={true}
+              minZoomLevel={15}
+              showsUserLocation={true}
+              followsUserLocation={true}>
+              {Object.keys(places).map((key, index) => {
+                // console.log(places[key].coordinates);
+                return (
+                  <Marker
+                    key={index}
+                    coordinate={{
+                      latitude: places[key].coordinates[1],
+                      longitude: places[key].coordinates[0],
+                    }}
+                    title={places[key].name}
+                    description={places[key].address}
+                  />
+                );
+              })}
+            </MapView>
+          </View>
         )}
       </ScrollView>
     </SafeAreaView>

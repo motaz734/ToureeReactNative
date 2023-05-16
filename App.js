@@ -18,6 +18,7 @@ import {Colors} from './components';
 import {routes} from './screens';
 import {Icon} from '@rneui/themed';
 import {MainNavigator} from './screens';
+import {baseURL} from './config';
 
 const Stack = createNativeStackNavigator();
 
@@ -44,7 +45,7 @@ const App: () => Node = () => {
   }, []);
 
   SuperTokens.init({
-    apiDomain: 'http://192.168.1.4:8000',
+    apiDomain: baseURL,
     apiBasePath: '/auth',
   });
 

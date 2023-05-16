@@ -3,6 +3,7 @@ import {BackgroundContainer, Colors} from '../components';
 import {Input, Icon, Button} from '@rneui/themed';
 import React from 'react';
 import {AuthContext} from '../App';
+import {apiURL, baseURL} from '../config';
 
 const styles = StyleSheet.create({
   container: {
@@ -33,7 +34,7 @@ const styles = StyleSheet.create({
   signinButton: {
     backgroundColor: Colors.primary,
     borderRadius: 14,
-    width: 158,
+    width: '100%',
     height: 50,
   },
 });
@@ -57,7 +58,7 @@ const validateSignin = (email, password, isLoggedIn, setIsLoggedIn) => {
         },
       ],
     };
-    let url = 'http://192.168.1.4:8000/auth/signin';
+    let url = `${baseURL}/auth/signin`;
     fetch(url, {
       method: 'POST',
       headers: {
@@ -75,6 +76,7 @@ const validateSignin = (email, password, isLoggedIn, setIsLoggedIn) => {
         }
       })
       .catch(error => {
+        alert('Error: ' + error);
         console.error('Error:', error);
       });
   }
@@ -135,7 +137,7 @@ export const Signin: (navigation: any) => Node = ({navigation}) => {
         />
         <Button
           title="Sign In"
-          containerStyle={{marginTop: 20}}
+          containerStyle={{marginTop: 20, width: '95%'}}
           buttonStyle={styles.signinButton}
           onPress={() =>
             validateSignin(email, password, isLoggedIn, setIsLoggedIn)

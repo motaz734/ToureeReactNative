@@ -1,3 +1,4 @@
-const apiURL = 'http://192.168.1.4:8000/api';
+const baseURL = 'http://192.168.1.10:8000';
+const apiURL = `${baseURL}/api`;
 
-export {apiURL};
+export {baseURL, apiURL};

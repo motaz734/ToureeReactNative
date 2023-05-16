@@ -5,6 +5,7 @@ import React from 'react';
 import {NavigationContainer, NavigationContext} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {AuthContext} from '../App';
+import {baseURL} from '../config';
 
 const styles = StyleSheet.create({
   container: {
@@ -35,14 +36,25 @@ const styles = StyleSheet.create({
   signupButton: {
     backgroundColor: Colors.primary,
     borderRadius: 14,
-    width: 158,
+    width: '100%',
     height: 50,
+  },
+  nameInput: {
+    borderBottomWidth: 0,
+    backgroundColor: Colors.white,
+    boxShadow: '0px 0px 4px rgba(74, 169, 188, 0.25)',
+    borderRadius: 14,
+    height: 45,
+    paddingLeft: 20,
+    paddingRight: 20,
   },
 });
 
 const validateSignup = (
   email,
   password,
+  firstName,
+  lastName,
   confirmPassword,
   isLoggedIn,
   setIsLoggedIn,
@@ -55,6 +67,10 @@ const validateSignup = (
     alert('Please confirm your password');
   } else if (password !== confirmPassword) {
     alert('Passwords do not match');
+  } else if (firstName === '') {
+    alert('Please enter your first name');
+  } else if (lastName === '') {
+    alert('Please enter your last name');
   } else {
     const data = {
       formFields: [
@@ -66,9 +82,17 @@ const validateSignup = (
           id: 'password',
           value: password,
         },
+        {
+          id: 'first_name',
+          value: firstName,
+        },
+        {
+          id: 'last_name',
+          value: lastName,
+        },
       ],
     };
-    const url = 'http://192.168.1.4:8000/auth/signup';
+    const url = `${baseURL}/auth/signup`;
     fetch(url, {
       method: 'POST',
       headers: {
@@ -113,12 +137,42 @@ export const Signup: () => Node = () => {
   const [confirmPassword, setConfirmPassword] = React.useState('');
   const [showPassword, setShowPassword] = React.useState(false);
   const [isLoggedIn, setIsLoggedIn] = React.useContext(AuthContext);
+  const [firstName, setFirstName] = React.useState('');
+  const [lastName, setLastName] = React.useState('');
+  const [username, setUsername] = React.useState('');
 
   const navigation = React.useContext(NavigationContext);
 
   return (
     <BackgroundContainer>
       <View style={styles.container}>
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            width: '100%',
+          }}>
+          <Input
+            value={firstName}
+            onChangeText={setFirstName}
+            containerStyle={{width: '50%'}}
+            inputContainerStyle={styles.nameInput}
+            label="First Name"
+            autoCapitalize="none"
+            returnKeyType="next"
+            labelStyle={styles.label}
+          />
+          <Input
+            value={lastName}
+            onChangeText={setLastName}
+            containerStyle={{width: '50%'}}
+            inputContainerStyle={styles.nameInput}
+            label="Last Name"
+            autoCapitalize="none"
+            returnKeyType="next"
+            labelStyle={styles.label}
+          />
+        </View>
         <Input
           value={email}
           onChangeText={setEmail}
@@ -159,12 +213,14 @@ export const Signup: () => Node = () => {
         />
         <Button
           title="Sign Up"
-          containerStyle={{marginTop: 20}}
+          containerStyle={{width: '95%', marginTop: 20}}
           buttonStyle={styles.signupButton}
           onPress={() =>
             validateSignup(
               email,
               password,
+              firstName,
+              lastName,
               confirmPassword,
               isLoggedIn,
               setIsLoggedIn,

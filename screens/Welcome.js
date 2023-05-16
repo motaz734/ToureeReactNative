@@ -8,9 +8,9 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 const styles = StyleSheet.create({
   signupButtonsContainer: {
     width: '80%',
-    height: '30%',
+    height: '25%',
     display: 'flex',
-    flexDirection: 'row',
+    flexDirection: 'column',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginLeft: '10%',
@@ -19,24 +19,27 @@ const styles = StyleSheet.create({
   signButton: {
     backgroundColor: Colors.primary,
     borderRadius: 14,
-    width: 158,
+    width: '100%',
     height: 60,
   },
   signupButton: {
     backgroundColor: Colors.white,
     borderRadius: 14,
-    width: 158,
+    width: '100%',
     height: 60,
   },
   signButtonTitle: {
     color: Colors.white,
     fontSize: 20,
     fontWeight: '500',
+    // marginRight: '25%',
   },
   signupButtonTitle: {
+    textAlign: 'center',
     color: Colors.primary,
     fontSize: 20,
     fontWeight: '500',
+    // marginRight: '25%',
   },
 });
 
@@ -47,12 +50,14 @@ export const Welcome: () => Node = () => {
       <View style={styles.signupButtonsContainer}>
         <Button
           title="Sign Up"
-          type="outline"
           onPress={() => {
             navigation.navigate('SignUp');
           }}
           buttonStyle={styles.signupButton}
           titleStyle={styles.signupButtonTitle}
+          containerStyle={{
+            width: '100%',
+          }}
         />
         <Button
           title="Sign In"
@@ -61,6 +66,9 @@ export const Welcome: () => Node = () => {
           }}
           buttonStyle={styles.signButton}
           titleStyle={styles.signButtonTitle}
+          containerStyle={{
+            width: '100%',
+          }}
         />
       </View>
     </BackgroundContainer>

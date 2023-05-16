@@ -70,7 +70,7 @@ const Stat: () => Node = ({icon, value}) => {
   );
 };
 
-export const Place: () => Node = ({route}) => {
+export const Attraction: () => Node = ({route}) => {
   const navigationContext = React.useContext(NavigationContext);
   const {id} = route.params;
   const [isFavourite, setIsFavourite] = React.useState(false);
@@ -78,11 +78,10 @@ export const Place: () => Node = ({route}) => {
 
   // get data from api
   React.useEffect(() => {
-    fetch(`${apiURL}/restaurant/${id}`)
+    fetch(`${apiURL}/attractions/${id}`)
       .then(response => response.json())
       .then(json => {
         setData(json);
-        setIsFavourite(json.favorite);
       })
       .catch(error => console.error(error));
   }, [id, setIsFavourite]);
@@ -115,28 +114,6 @@ export const Place: () => Node = ({route}) => {
                   color={Colors.white}
                   size={30}
                   onPress={() => navigationContext.goBack()}
-                />
-              }
-              rightComponent={
-                <Icon
-                  name={isFavourite ? 'heart' : 'heart-outline'}
-                  type="material-community"
-                  color={Colors.white}
-                  size={30}
-                  onPress={() => {
-                    fetch(`${apiURL}/restaurant/${id}/favorite`, {
-                      method: 'POST',
-                    })
-                      .then(response => response.json())
-                      .then(json => {
-                        nativeToastAndroid.show(
-                          json.message,
-                          nativeToastAndroid.SHORT,
-                        );
-                        setIsFavourite(!isFavourite);
-                      })
-                      .catch(error => console.error(error));
-                  }}
                 />
               }
               containerStyle={{
