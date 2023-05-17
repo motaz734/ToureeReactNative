@@ -68,7 +68,6 @@ export const Reviews: () => Node = ({route}) => {
   const [reviewRating, setReviewRating] = React.useState(0);
   const {reviews, data} = route.params;
   let navigationContext = React.useContext(NavigationContext);
-  alert(JSON.stringify(data));
   return (
     <View style={{flex: 1, backgroundColor: Colors.black}}>
       {data.image && (
